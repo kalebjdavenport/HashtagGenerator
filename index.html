@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Hashtag Generator — Free Tool</title>
+  <meta name="description" content="Generate relevant hashtags from any text using AI. Runs entirely in your browser. No data sent to any server." />
+
+  <!-- Canonical URL (update after first deploy) -->
+  <link rel="canonical" href="https://YOUR_DOMAIN/" />
+
+  <!-- Theme color -->
+  <meta name="theme-color" content="#168eea" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="AI Hashtag Generator — Free Tool" />
+  <meta property="og:description" content="Paste your text and get relevant hashtags instantly. AI-powered, runs locally in your browser." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://YOUR_DOMAIN/" />
+  <meta property="og:image" content="https://YOUR_DOMAIN/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:site_name" content="AI Hashtag Generator" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="AI Hashtag Generator — Free Tool" />
+  <meta name="twitter:description" content="Paste your text and get relevant hashtags instantly. AI-powered, runs locally in your browser." />
+  <meta name="twitter:image" content="https://YOUR_DOMAIN/og-image.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+  <!-- Figtree font (Buffer's primary typeface) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@300..900&display=swap" />
+
+  <!-- Resource hints for HuggingFace model CDN -->
+  <link rel="preconnect" href="https://huggingface.co" crossorigin />
+  <link rel="dns-prefetch" href="https://huggingface.co" />
+  <link rel="preconnect" href="https://cdn-lfs.hf.co" crossorigin />
+  <link rel="dns-prefetch" href="https://cdn-lfs.hf.co" />
+
+  <!-- Structured Data: WebApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "AI Hashtag Generator",
+    "description": "Generate relevant hashtags from any text using AI. Runs entirely in your browser with no data sent to any server.",
+    "url": "https://YOUR_DOMAIN/",
+    "applicationCategory": "UtilityApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "browserRequirements": "Requires a modern browser with WebGPU or WASM support"
+  }
+  </script>
+
+  <!-- Structured Data: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Is my text sent to a server?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. The AI model runs entirely in your browser using WebAssembly/WebGPU. Your text never leaves your device."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it work offline?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "After the first visit the AI model is cached in your browser. You can then generate hashtags without an internet connection."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What AI model does it use?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "It uses a compact transformer-based NLP model from Hugging Face, optimized to run in the browser via the Transformers.js library."
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body class="bg-white text-buffer-dark min-h-screen font-sans">
+  <main class="max-w-2xl mx-auto px-5 py-16">
+    <section aria-labelledby="hashtag-gen-heading">
+      <h1 id="hashtag-gen-heading" class="text-4xl font-bold tracking-tight mb-3">AI Hashtag Generator</h1>
+      <p class="text-buffer-muted text-lg mb-10 leading-relaxed">
+        Paste your text or upload a .txt file to generate relevant hashtags using AI,
+        directly in your browser. No data is sent to any server.
+      </p>
+      <div id="hashtag-generator">
+        <noscript>
+          <p class="text-buffer-muted">This tool requires JavaScript to run the AI model in your browser.</p>
+        </noscript>
+      </div>
+    </section>
+  </main>
+
+  <!-- Shared footer — reusable across pages -->
+  <footer class="bg-buffer-light border-t border-buffer-border mt-16">
+    <div class="max-w-5xl mx-auto px-5 py-12">
+
+      <!-- Features grid -->
+      <section aria-labelledby="why-use" class="mb-10">
+        <h2 id="why-use" class="text-lg font-bold tracking-tight text-buffer-dark mb-4">Why Use This Tool?</h2>
+        <dl class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-buffer-muted">
+          <div>
+            <dt class="font-semibold text-buffer-dark">Private</dt>
+            <dd class="mt-0.5">Runs entirely in your browser. Nothing sent to a server.</dd>
+          </div>
+          <div>
+            <dt class="font-semibold text-buffer-dark">No Signup</dt>
+            <dd class="mt-0.5">No account, email, or paywall.</dd>
+          </div>
+          <div>
+            <dt class="font-semibold text-buffer-dark">Works Offline</dt>
+            <dd class="mt-0.5">Model is cached after first visit.</dd>
+          </div>
+          <div>
+            <dt class="font-semibold text-buffer-dark">AI-Powered</dt>
+            <dd class="mt-0.5">Real NLP, not just keyword matching.</dd>
+          </div>
+        </dl>
+      </section>
+
+      <!-- How it works + FAQ side by side -->
+      <div class="grid md:grid-cols-2 gap-10 text-sm text-buffer-muted">
+        <section aria-labelledby="how-it-works">
+          <h2 id="how-it-works" class="text-lg font-bold tracking-tight text-buffer-dark mb-3">How It Works</h2>
+          <ol class="list-decimal list-inside space-y-1.5">
+            <li><strong class="text-buffer-dark">Paste your text</strong> — any article, post, or caption.</li>
+            <li><strong class="text-buffer-dark">AI analyzes it</strong> — a transformer model runs in-browser.</li>
+            <li><strong class="text-buffer-dark">Get hashtags</strong> — key topics become hashtags.</li>
+            <li><strong class="text-buffer-dark">Copy &amp; use</strong> — click to copy one or all.</li>
+          </ol>
+        </section>
+
+        <section aria-labelledby="faq-heading">
+          <h2 id="faq-heading" class="text-lg font-bold tracking-tight text-buffer-dark mb-3">FAQ</h2>
+          <details class="group">
+            <summary class="font-semibold text-buffer-dark cursor-pointer py-1.5 select-none">Is my text sent to a server?</summary>
+            <p class="pb-2 pl-0.5">No. Everything runs in your browser via WebAssembly/WebGPU.</p>
+          </details>
+          <details class="group">
+            <summary class="font-semibold text-buffer-dark cursor-pointer py-1.5 select-none">Does it work offline?</summary>
+            <p class="pb-2 pl-0.5">Yes — the model is cached after your first visit.</p>
+          </details>
+          <details class="group">
+            <summary class="font-semibold text-buffer-dark cursor-pointer py-1.5 select-none">What AI model does it use?</summary>
+            <p class="pb-2 pl-0.5">A compact Hugging Face transformer, optimized for the browser via Transformers.js.</p>
+          </details>
+        </section>
+      </div>
+
+    </div>
+  </footer>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

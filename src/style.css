@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/* ── Buffer-inspired Theme ─────────────────────────────────── */
+
+@theme {
+  --color-buffer-blue: #168eea;
+  --color-buffer-blue-hover: #137ac9;
+  --color-buffer-blue-active: #0f63a4;
+  --color-buffer-dark: #323b43;
+  --color-buffer-muted: #59626a;
+  --color-buffer-border: #ced7df;
+  --color-buffer-light: #f4f7f9;
+  --color-buffer-green: #2fd566;
+  --font-family-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Animations ────────────────────────────────────────────── */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+.progress-fill {
+  transition: width 0.3s ease;
+}
+
+/* ── Hashtag Chips ─────────────────────────────────────────── */
+
+.hashtag-chip {
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.hashtag-chip:hover {
+  background-color: #e8f4fd;
+  border-color: #168eea;
+  box-shadow: 0 1px 3px rgba(22, 142, 234, 0.15);
+}
+
+.hashtag-chip.copied {
+  background-color: #e6fbee;
+  border-color: #2fd566;
+}
+
+/* ── Global Overrides ──────────────────────────────────────── */
+
+::selection {
+  background-color: #168eea;
+  color: #fff;
+}
+
+textarea:focus,
+input:focus,
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(22, 142, 234, 0.25);
+}
+
+/* ── Footer Details/FAQ ────────────────────────────────────── */
+
+details summary {
+  list-style: none;
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details summary::before {
+  content: "+";
+  display: inline-block;
+  width: 1.25rem;
+  font-weight: 600;
+  color: #168eea;
+  transition: transform 0.15s ease;
+}
+
+details[open] summary::before {
+  content: "\2212"; /* minus sign */
+}
