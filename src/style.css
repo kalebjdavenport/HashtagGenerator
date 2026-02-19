@@ -48,6 +48,37 @@
   border-color: #2fd566;
 }
 
+/* ── Tabs ─────────────────────────────────────────────────── */
+
+.tab-button {
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab-button.tab-active {
+  color: #168eea;
+  border-bottom-color: #168eea;
+}
+
+.tab-button:hover:not(.tab-active) {
+  color: #323b43;
+}
+
+.tab-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(22, 142, 234, 0.25);
+  border-radius: 4px 4px 0 0;
+}
+
+.tab-panel:focus {
+  outline: none;
+}
+
+/* ── Detection Banner ─────────────────────────────────────── */
+
+.nano-banner code {
+  user-select: all;
+}
+
 /* ── Global Overrides ──────────────────────────────────────── */
 
 ::selection {

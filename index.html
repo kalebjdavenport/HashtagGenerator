@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Hashtag Generator — Free Tool</title>
-  <meta name="description" content="Generate relevant hashtags from any text using AI. Runs entirely in your browser. No data sent to any server." />
+  <meta name="description" content="Generate relevant hashtags from any text using three AI methods: KeyBERT (local), Chrome AI Nano, or OpenAI. Compare results and pick the best." />
 
   <!-- Canonical URL (update after first deploy) -->
   <link rel="canonical" href="https://YOUR_DOMAIN/" />
@@ -73,7 +73,7 @@
         "name": "Is my text sent to a server?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "No. The AI model runs entirely in your browser using WebAssembly/WebGPU. Your text never leaves your device."
+          "text": "KeyBERT and Chrome AI run entirely in your browser — your text never leaves your device. The OpenAI method sends text to OpenAI's API via a server proxy."
         }
       },
       {
@@ -101,8 +101,7 @@
     <section aria-labelledby="hashtag-gen-heading">
       <h1 id="hashtag-gen-heading" class="text-4xl font-bold tracking-tight mb-3">AI Hashtag Generator</h1>
       <p class="text-buffer-muted text-lg mb-10 leading-relaxed">
-        Paste your text or upload a .txt file to generate relevant hashtags using AI,
-        directly in your browser. No data is sent to any server.
+        Generate relevant hashtags using three AI methods: local KeyBERT, Chrome's built-in Gemini Nano, or OpenAI GPT-4o-mini. Compare results side by side.
       </p>
       <div id="hashtag-generator">
         <noscript>
@@ -155,7 +154,7 @@
           <h2 id="faq-heading" class="text-lg font-bold tracking-tight text-buffer-dark mb-3">FAQ</h2>
           <details class="group">
             <summary class="font-semibold text-buffer-dark cursor-pointer py-1.5 select-none">Is my text sent to a server?</summary>
-            <p class="pb-2 pl-0.5">No. Everything runs in your browser via WebAssembly/WebGPU.</p>
+            <p class="pb-2 pl-0.5">KeyBERT and Chrome AI run entirely in your browser — your text never leaves your device. The OpenAI method sends text to OpenAI's API via our server proxy.</p>
           </details>
           <details class="group">
             <summary class="font-semibold text-buffer-dark cursor-pointer py-1.5 select-none">Does it work offline?</summary>
