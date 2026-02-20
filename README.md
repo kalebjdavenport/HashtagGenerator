@@ -6,7 +6,7 @@ Generate relevant hashtags from any text using three local AI methods — compar
 |--------|-------|------|---------|
 | **KeyBERT** | all-MiniLM-L6-v2 (Transformers.js) | ~23 MB | Local — text never leaves your device |
 | **Chrome AI** | Gemini Nano (built into Chrome) | Ships with Chrome | Local — text never leaves your device |
-| **WebLLM** | TinyLlama-1.1B (WebGPU) | ~697 MB | Local — text never leaves your device |
+| **WebLLM** | Llama-3.2-3B (WebGPU) | ~1.4 GB | Local — text never leaves your device |
 
 ## How It Works
 
@@ -34,9 +34,9 @@ Uses Chrome's built-in `LanguageModel` Prompt API to generate hashtags locally. 
 2. Navigate to `chrome://flags/#prompt-api-for-gemini-nano` → **Enabled**
 3. Relaunch Chrome
 
-### WebLLM (TinyLlama-1.1B)
+### WebLLM (Llama-3.2-3B)
 
-Uses [WebLLM](https://github.com/mlc-ai/web-llm) to run TinyLlama-1.1B-Chat locally in the browser via WebGPU. The model (~697 MB) downloads on first use and is cached. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+).
+Uses [WebLLM](https://github.com/mlc-ai/web-llm) to run Llama-3.2-3B-Instruct locally in the browser via WebGPU. The model (~1.4 GB) downloads on first use and is cached. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+).
 
 ## Getting Started
 
@@ -97,6 +97,97 @@ interface GenerationMethod {
   destroy?(): void;
 }
 ```
+
+### How it stays off the main thread
+
+Every AI method runs its heavy computation outside the main thread, keeping the UI responsive at all times. No inference work happens on the main thread — it only coordinates inputs, displays results, and manages state.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  BROWSER                                                            │
+│                                                                     │
+│  ┌───────────────────────────────────────┐                          │
+│  │         MAIN THREAD                   │                          │
+│  │                                       │                          │
+│  │  index.html ──► main.ts               │                          │
+│  │   (static      (attach listeners,     │                          │
+│  │    form)        tabs, persistence)     │                          │
+│  │         │                              │                          │
+│  │         ▼                              │                          │
+│  │  User pastes text + clicks Generate   │                          │
+│  │         │                              │                          │
+│  │         ├──────────────────────────────┼──► Web Worker (KeyBERT) │
+│  │         │  postMessage(text)           │    ┌──────────────────┐ │
+│  │         │                              │    │ Transformers.js  │ │
+│  │         │                              │    │ (WASM runtime)   │ │
+│  │         │                              │    │                  │ │
+│  │         │                              │    │ 1. Extract       │ │
+│  │         │                              │    │    n-grams       │ │
+│  │         │                              │    │ 2. Embed doc +   │ │
+│  │         │                              │    │    candidates    │ │
+│  │         │                              │    │ 3. Cosine sim    │ │
+│  │         │                              │    │ 4. MMR ranking   │ │
+│  │         │  postMessage(hashtags)       │    │ 5. Format tags   │ │
+│  │         │◄─────────────────────────────┼────┘──────────────────┘ │
+│  │         │                              │                          │
+│  │         ├──────────────────────────────┼──► Chrome Process       │
+│  │         │  LanguageModel.prompt(text)  │    (Gemini Nano)        │
+│  │         │  (async — returns Promise)   │    ┌──────────────────┐ │
+│  │         │                              │    │ Built-in LLM     │ │
+│  │         │                              │    │ managed by       │ │
+│  │         │  Promise resolves            │    │ Chrome — runs    │ │
+│  │         │◄─────────────────────────────┼────┤ in a separate    │ │
+│  │         │                              │    │ browser process  │ │
+│  │         │                              │    └──────────────────┘ │
+│  │         │                              │                          │
+│  │         ├──────────────────────────────┼──► GPU (WebLLM)         │
+│  │         │  engine.chat.completions     │    ┌──────────────────┐ │
+│  │         │  .create() (async)           │    │ Llama-3.2-3B     │ │
+│  │         │                              │    │ via WebGPU       │ │
+│  │         │                              │    │                  │ │
+│  │         │                              │    │ Shader compute   │ │
+│  │         │  Promise resolves            │    │ runs entirely    │ │
+│  │         │◄─────────────────────────────┼────┤ on the GPU       │ │
+│  │         │                              │    └──────────────────┘ │
+│  │         ▼                              │                          │
+│  │  parseHashtags(raw) ──► render chips  │                          │
+│  │  save to localStorage                 │                          │
+│  └───────────────────────────────────────┘                          │
+│                                                                     │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │  NETWORK (first visit only — cached after)                    │  │
+│  │                                                               │  │
+│  │  HuggingFace CDN ──► all-MiniLM-L6-v2 (~23 MB)  ──► Cache API│  │
+│  │  MLC CDN ──────────► Llama-3.2-3B-q4f16 (~1.4 GB) ► Cache API│  │
+│  │  Chrome built-in ──► Gemini Nano (ships with browser)         │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+│                                                                     │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │  PERSISTENCE (localStorage)                                   │  │
+│  │  title, text, selected tab, per-method results                │  │
+│  │  Versioned schema · debounced writes · restored on reload     │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+│                                                                     │
+│  No data ever leaves the browser. Zero server requests after        │
+│  one-time model downloads.                                          │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Why the main thread stays free:**
+
+| Method | Where inference runs | Mechanism |
+|--------|---------------------|-----------|
+| **KeyBERT** | Web Worker (separate thread) | `postMessage()` sends text to worker; worker runs WASM inference and posts hashtags back. Main thread never touches the model. |
+| **Chrome AI** | Separate browser process | Chrome's `LanguageModel` API is async. The LLM runs in an isolated process managed by the browser, not in page JavaScript. |
+| **WebLLM** | GPU via WebGPU | `MLC Engine` dispatches compute shaders to the GPU. The main thread only submits work and awaits the result — all matrix math runs on GPU hardware. |
+
+**How text is processed (no server involved):**
+
+1. User pastes text into the `<textarea>` (or uploads a `.txt` file via `FileReader`)
+2. On submit, the main thread passes the raw text to the active method's `generate()` function
+3. Each method processes the text using its own off-thread approach (see diagram above)
+4. Results return as a `string[]` of hashtags, which are parsed by `parseHashtags()` (regex extraction, lowercase, deduplicate) and rendered as clickable chips
+5. Results are saved to `localStorage` so they persist across page reloads
 
 Shared utilities live in `src/utils/`:
 - **`parse-hashtags.ts`** — Robust hashtag parser used by both LLM methods (Chrome AI, WebLLM). Tries `#word` regex first, falls back to comma/newline splitting.

@@ -25,14 +25,14 @@ export function renderHashtags(
       "hashtag-chip inline-flex items-center gap-1.5 bg-buffer-light text-buffer-dark text-sm font-semibold px-3.5 py-2 rounded-xl border border-buffer-border cursor-pointer";
     btn.setAttribute("data-hashtag", tag);
     btn.setAttribute("aria-label", `Copy hashtag ${tag}`);
-    btn.innerHTML = `${tag} <span class="text-xs opacity-60" aria-hidden="true">\u{1F4CB}</span>`;
+    btn.innerHTML = `${tag} <svg class="inline-block w-3.5 h-3.5 opacity-50" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
 
     btn.addEventListener("click", async () => {
       const success = await copyToClipboard(tag);
       if (success) {
         btn.classList.add("copied");
         const originalHTML = btn.innerHTML;
-        btn.innerHTML = `${tag} <span class="text-xs" aria-hidden="true">\u2713</span>`;
+        btn.innerHTML = `${tag} <svg class="inline-block w-3.5 h-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
         showCopyFeedback(`Copied ${tag}`);
         setTimeout(() => {
           btn.classList.remove("copied");

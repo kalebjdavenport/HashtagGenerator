@@ -6,4 +6,7 @@ export default defineConfig({
   worker: {
     format: "es",
   },
+  optimizeDeps: {
+    include: ["@mlc-ai/web-llm"],
+  },
 });

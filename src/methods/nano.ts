@@ -18,6 +18,7 @@ interface LanguageModelAPI {
   capabilities?(): Promise<{ available: string }>;
   create(options?: {
     systemPrompt?: string;
+    expectedOutputLanguages?: string[];
     monitor?: (m: EventTarget) => void;
   }): Promise<NanoSession>;
 }
@@ -96,6 +97,7 @@ export function createNanoMethod(): GenerationMethod {
     const api = getAPI()!;
     session = await api.create({
       systemPrompt: SYSTEM_PROMPT,
+      expectedOutputLanguages: ["en"],
     });
     return session;
   }

@@ -1,8 +1,6 @@
-import "./style.css";
-
 import type { GenerationMethod, MethodId, GenerationResult } from "./types.ts";
 import { load, save, clear as storageClear, debounce } from "./storage.ts";
-import { formTemplate, getFormElements, setupFileUpload } from "./ui/form.ts";
+import { getFormElements, setupFileUpload } from "./ui/form.ts";
 import {
   setStatus,
   renderHashtags,
@@ -21,8 +19,7 @@ if (import.meta.env.DEV) {
 
 // ── Mount Point ─────────────────────────────────────────────
 
-const root = document.getElementById("hashtag-generator")!;
-root.innerHTML = formTemplate();
+// Form HTML is inlined in index.html to avoid layout shift.
 
 const el = getFormElements();
 

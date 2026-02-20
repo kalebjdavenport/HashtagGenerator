@@ -6,23 +6,25 @@ import type {
 import { parseHashtags } from "../utils/parse-hashtags.ts";
 import { spinnerStatus } from "../utils/status-html.ts";
 
-import type { MLCEngineInterface } from "@mlc-ai/web-llm";
+import { CreateMLCEngine, type MLCEngineInterface } from "@mlc-ai/web-llm";
 
-const MODEL_ID = "TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC";
+const MODEL_ID = "Llama-3.2-3B-Instruct-q4f16_1-MLC";
 
-const MAX_HASHTAGS = 8;
+const MAX_HASHTAGS = 10;
 
-const SYSTEM_PROMPT = `## Task
-Extract 5 hashtags from the text.
-## Format
-#word #word #word #word #word
-## Examples
-Input: A guide to training neural networks with PyTorch
-Output: #pytorch #neuralnetworks #deeplearning #machinelearning #ai
-##
-Input: Easy pasta recipes for busy weeknights
-Output: #pasta #recipes #weeknightdinner #cooking #easymeals
-##`;
+const SYSTEM_PROMPT = `Extract 8 hashtags from the article. Output only hashtags separated by spaces on a single line, nothing else. Capture specific ideas and arguments, not broad topics. Every hashtag must start with a noun or adjective, never a verb, adverb, or filler word.
+
+Format: #word #word #word #word #word #word #word #word
+Do not number them. Do not add explanations.
+
+Input: Stop measuring developers by lines of code. The best engineers don't ship more, they ship less. They simplify systems, delete unused features, and push back on unnecessary requirements. A team's real output is not volume, it is the impact of what they choose to build. The best decision is often choosing not to build something at all.
+Output: #devproductivity #lessismore #impactoveroutput #scopereduction #codequality #featurecreep #simplicity #engineeringmetrics
+
+Input: Remote teams consistently outperform office teams when they lean into asynchronous communication. Deep work demands long uninterrupted focus blocks that open offices destroy. Most meetings could be a document. Writing decisions down creates a searchable record and lets people contribute on their own schedule instead of synchronizing calendars.
+Output: #remotework #asyncfirst #deepwork #documentculture #writtenrecords #focustime #meetingfree #teamcommunication
+
+Input: Microservices sound great in conference talks but most teams adopt them too early. A well-structured monolith handles more traffic than people expect and is far easier to debug. Distributed systems introduce network failures, data consistency headaches, and operational complexity that small teams cannot afford. Start simple and split services only when you have a clear proven reason to do so.
+Output: #monolithfirst #microservices #systemdesign #scalability #operationalcomplexity #distributedsystems #startsimple #technicaldebt`;
 
 function hasWebGPU(): boolean {
   return typeof navigator !== "undefined" && "gpu" in navigator;
@@ -49,8 +51,6 @@ export function createWebllmMethod(): GenerationMethod {
     }
 
     engineLoading = true;
-
-    const { CreateMLCEngine } = await import("@mlc-ai/web-llm");
 
     engine = await CreateMLCEngine(MODEL_ID, {
       initProgressCallback: (progress) => {
@@ -89,7 +89,7 @@ export function createWebllmMethod(): GenerationMethod {
     id: "webllm",
     label: "WebLLM",
     description:
-      "Runs TinyLlama-1.1B locally in your browser via WebGPU. No data sent to any server.",
+      "Runs Llama-3.2-3B locally in your browser via WebGPU. No data sent to any server.",
 
     isAvailable(): boolean {
       return engineReady;
@@ -114,7 +114,7 @@ export function createWebllmMethod(): GenerationMethod {
           { role: "user", content: userMessage },
         ],
         temperature: 0.3,
-        max_tokens: 100,
+        max_tokens: 150,
       });
 
       const raw = reply.choices[0]?.message?.content ?? "";
@@ -133,7 +133,7 @@ export function createWebllmMethod(): GenerationMethod {
           webgpuOk
             ? `<p id="webllm-progress" class="text-sm text-buffer-muted">Click <strong>Generate Hashtags</strong> or switch to this tab to start loading the model.</p>
                <div id="webllm-ready" class="text-sm text-buffer-muted hidden">
-                 <p>Uses <strong>TinyLlama-1.1B</strong> running locally in your browser via WebGPU. Your text never leaves your device.</p>
+                 <p>Uses <strong>Llama-3.2-3B</strong> running locally in your browser via WebGPU. Your text never leaves your device.</p>
                </div>`
             : `<div class="nano-banner rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm">
                  <p class="font-semibold text-amber-800 mb-2">WebGPU is not available</p>
