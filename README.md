@@ -1,42 +1,14 @@
 # AI Hashtag Generator
 
-Generate relevant hashtags from any text using three local AI methods — compare results side by side and pick the best. Everything runs in your browser.
+A privacy-first hashtag generator that runs entirely in your browser. Paste any article, blog post, or text and get relevant hashtags instantly — no server, no signup, no data leaves your device.
 
-| Method | Model | Size | Privacy |
-|--------|-------|------|---------|
-| **KeyBERT** | all-MiniLM-L6-v2 (Transformers.js) | ~23 MB | Local — text never leaves your device |
-| **Chrome AI** | Gemini Nano (built into Chrome) | Ships with Chrome | Local — text never leaves your device |
-| **WebLLM** | Llama-3.2-3B (WebGPU) | ~1.4 GB | Local — text never leaves your device |
+Three AI methods let you compare results side by side:
 
-## How It Works
-
-1. Paste text (or upload a `.txt` file) and optionally add a title
-2. Switch between the three method tabs to choose a generation approach
-3. Click **Generate Hashtags** — results appear with timing info
-4. Click a hashtag to copy it, or **Copy All** at once
-5. Your form input, selected tab, and results per method are saved to localStorage and restored on reload
-
-### KeyBERT (local NLP)
-
-A KeyBERT-style algorithm powered by [Transformers.js](https://huggingface.co/docs/transformers.js). The `all-MiniLM-L6-v2` model (~23 MB) downloads from the Hugging Face CDN on first use and is cached by the browser. Runs in a Web Worker to keep the UI responsive.
-
-1. **Candidate extraction** — Generate 1–3 word n-grams, filter stop words, deduplicate
-2. **Embedding** — Encode the document and all candidates using a sentence-transformer model
-3. **Ranking** — Score candidates by cosine similarity to the document embedding
-4. **Diversification** — Apply Maximal Marginal Relevance (MMR) to avoid near-synonyms
-5. **Formatting** — Convert top candidates to `#hashtag` format
-
-### Chrome AI (Gemini Nano)
-
-Uses Chrome's built-in `LanguageModel` Prompt API to generate hashtags locally. Requires Chrome 127+ with experimental flags enabled:
-
-1. Navigate to `chrome://flags/#optimization-guide-on-device-model` → **Enabled BypassPerfRequirement**
-2. Navigate to `chrome://flags/#prompt-api-for-gemini-nano` → **Enabled**
-3. Relaunch Chrome
-
-### WebLLM (Llama-3.2-3B)
-
-Uses [WebLLM](https://github.com/mlc-ai/web-llm) to run Llama-3.2-3B-Instruct locally in the browser via WebGPU. The model (~1.4 GB) downloads on first use and is cached. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+).
+| Method | Model | Download | How it runs |
+|--------|-------|----------|-------------|
+| **KeyBERT** | all-MiniLM-L6-v2 | ~23 MB | Web Worker + WASM |
+| **Chrome AI** | Gemini Nano | Ships with Chrome | Browser process |
+| **WebLLM** | Llama-3.2-3B | ~1.4 GB | WebGPU (GPU compute) |
 
 ## Getting Started
 
@@ -45,46 +17,50 @@ npm install
 npm run dev
 ```
 
-Open the dev server URL in your browser. All three methods work locally — no API keys or server configuration needed.
+Open the dev server URL in your browser. All three methods work locally — no API keys needed.
 
-## Building for Production
+## Production Build
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Project Structure
+## How It Works
 
-```
-├── index.html                # Semantic HTML with SEO/structured data
-├── vite.config.ts            # Vite config (Tailwind, ES module workers)
-├── src/
-│   ├── main.ts               # App coordinator: wires methods, tabs, persistence
-│   ├── types.ts              # GenerationMethod interface, MethodId, GenerationResult
-│   ├── storage.ts            # localStorage: save/load/clear with debounce
-│   ├── ui/
-│   │   ├── tabs.ts           # Accessible tab component (ARIA, keyboard nav)
-│   │   ├── form.ts           # Form HTML template + element helpers
-│   │   └── results.ts        # Hashtag rendering, copy, timing display
-│   ├── utils/
-│   │   ├── parse-hashtags.ts # Shared hashtag parser (regex + fallback)
-│   │   └── status-html.ts    # Shared spinner/status HTML helper
-│   ├── methods/
-│   │   ├── keybert.ts        # Worker lifecycle wrapped in GenerationMethod
-│   │   ├── nano.ts           # Chrome AI detection + session + fallback banner
-│   │   └── webllm.ts         # WebLLM engine lifecycle + WebGPU detection
-│   ├── worker.ts             # Web Worker: model loading, embedding pipeline
-│   ├── keybert.ts            # Pure functions: candidate extraction, cosine similarity, MMR
-│   ├── stopwords.ts          # English stop word list
-│   ├── clipboard.ts          # Clipboard API with legacy fallback
-│   ├── vitals.ts             # Web Vitals monitoring (dev only)
-│   └── style.css             # Theme, tab styles, animations
-```
+1. Paste text (or upload a `.txt` file) and optionally add a title
+2. Switch between the three method tabs
+3. Click **Generate Hashtags** — results appear with timing info
+4. Click a hashtag to copy it, or **Copy All** at once
+5. Form input, selected tab, and results persist across page reloads via localStorage
+
+### KeyBERT (Web Worker + WASM)
+
+A KeyBERT-style pipeline using [Transformers.js](https://huggingface.co/docs/transformers.js). Runs in a Web Worker so the main thread stays free.
+
+1. Extract 1-2 word n-gram candidates, filter stop words
+2. Embed the document and candidates using `all-MiniLM-L6-v2`
+3. Rank by cosine similarity to the document
+4. Diversify with Maximal Marginal Relevance (MMR)
+5. Format as `#hashtag`
+
+### Chrome AI (Gemini Nano)
+
+Uses Chrome's built-in `LanguageModel` Prompt API. The model runs in a separate browser process — not in page JavaScript. Requires Chrome 127+ with flags:
+
+1. `chrome://flags/#optimization-guide-on-device-model` → **Enabled BypassPerfRequirement**
+2. `chrome://flags/#prompt-api-for-gemini-nano` → **Enabled**
+3. Relaunch Chrome
+
+### WebLLM (Llama-3.2-3B via WebGPU)
+
+Uses [WebLLM](https://github.com/mlc-ai/web-llm) to run Llama-3.2-3B-Instruct locally via WebGPU. All inference happens on the GPU — the main thread only submits work and awaits results. Requires Chrome/Edge 113+.
+
+The system prompt uses few-shot examples to guide the model toward specific, argument-level hashtags rather than broad topic words.
 
 ## Architecture
 
-All three methods implement a common `GenerationMethod` interface (`src/types.ts`), making it straightforward to add new methods:
+All methods implement a common `GenerationMethod` interface, making it straightforward to add new methods:
 
 ```typescript
 interface GenerationMethod {
@@ -98,9 +74,9 @@ interface GenerationMethod {
 }
 ```
 
-### How it stays off the main thread
+### Off-main-thread design
 
-Every AI method runs its heavy computation outside the main thread, keeping the UI responsive at all times. No inference work happens on the main thread — it only coordinates inputs, displays results, and manages state.
+No AI inference runs on the main thread. The UI stays responsive during generation.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -173,27 +149,42 @@ Every AI method runs its heavy computation outside the main thread, keeping the 
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**Why the main thread stays free:**
-
 | Method | Where inference runs | Mechanism |
 |--------|---------------------|-----------|
-| **KeyBERT** | Web Worker (separate thread) | `postMessage()` sends text to worker; worker runs WASM inference and posts hashtags back. Main thread never touches the model. |
-| **Chrome AI** | Separate browser process | Chrome's `LanguageModel` API is async. The LLM runs in an isolated process managed by the browser, not in page JavaScript. |
-| **WebLLM** | GPU via WebGPU | `MLC Engine` dispatches compute shaders to the GPU. The main thread only submits work and awaits the result — all matrix math runs on GPU hardware. |
+| **KeyBERT** | Web Worker | `postMessage()` sends text to worker; worker runs WASM inference and posts hashtags back |
+| **Chrome AI** | Separate browser process | Chrome's `LanguageModel` API is async; the LLM runs in an isolated process managed by the browser |
+| **WebLLM** | GPU via WebGPU | MLC Engine dispatches compute shaders to the GPU; main thread only submits work and awaits the result |
 
-**How text is processed (no server involved):**
+## Project Structure
 
-1. User pastes text into the `<textarea>` (or uploads a `.txt` file via `FileReader`)
-2. On submit, the main thread passes the raw text to the active method's `generate()` function
-3. Each method processes the text using its own off-thread approach (see diagram above)
-4. Results return as a `string[]` of hashtags, which are parsed by `parseHashtags()` (regex extraction, lowercase, deduplicate) and rendered as clickable chips
-5. Results are saved to `localStorage` so they persist across page reloads
-
-Shared utilities live in `src/utils/`:
-- **`parse-hashtags.ts`** — Robust hashtag parser used by both LLM methods (Chrome AI, WebLLM). Tries `#word` regex first, falls back to comma/newline splitting.
-- **`status-html.ts`** — Spinner + message HTML template used by all three methods for status updates.
-
-Session state (title, text, selected tab, per-method results) is persisted to localStorage via `src/storage.ts` with a versioned schema and debounced writes.
+```
+├── index.html                  # Static HTML shell (form inlined to prevent layout shift)
+├── vite.config.ts              # Vite + Tailwind v4 config
+├── public/
+│   ├── favicon.svg             # SVG favicon (hashtag icon)
+│   └── favicon.png             # PNG fallback (192x192)
+├── src/
+│   ├── main.ts                 # App coordinator: wires methods, tabs, persistence
+│   ├── types.ts                # GenerationMethod interface, MethodId, GenerationResult
+│   ├── storage.ts              # localStorage: save/load/clear with debounced writes
+│   ├── clipboard.ts            # Clipboard API with legacy execCommand fallback
+│   ├── vitals.ts               # Web Vitals monitoring (dev only)
+│   ├── style.css               # Tailwind v4 + Buffer theme + component styles
+│   ├── keybert.ts              # Pure functions: candidate extraction, cosine similarity, MMR
+│   ├── stopwords.ts            # English stop word list
+│   ├── worker.ts               # Web Worker: model loading, embedding pipeline
+│   ├── ui/
+│   │   ├── form.ts             # FormElements type + DOM queries + file upload
+│   │   ├── tabs.ts             # Accessible tab component (ARIA, keyboard nav)
+│   │   └── results.ts          # Hashtag chip rendering, copy feedback, timing display
+│   ├── methods/
+│   │   ├── keybert.ts          # Worker lifecycle wrapped in GenerationMethod
+│   │   ├── nano.ts             # Chrome AI detection + session + availability banner
+│   │   └── webllm.ts           # MLC Engine lifecycle + WebGPU detection
+│   └── utils/
+│       ├── parse-hashtags.ts   # Shared hashtag parser (regex + fallback)
+│       └── status-html.ts      # Spinner/status HTML helper
+```
 
 ## Privacy
 
@@ -201,9 +192,11 @@ All three methods run entirely in your browser. No text is ever sent to any serv
 
 ## Browser Support
 
-- **KeyBERT**: Chrome/Edge 90+, Firefox 90+, Safari 15+
-- **Chrome AI**: Chrome 127+ with experimental flags enabled
-- **WebLLM**: Chrome/Edge 113+ (requires WebGPU)
+| Method | Browsers |
+|--------|----------|
+| **KeyBERT** | Chrome/Edge 90+, Firefox 90+, Safari 15+ |
+| **Chrome AI** | Chrome 127+ with experimental flags |
+| **WebLLM** | Chrome/Edge 113+ (WebGPU required) |
 
 ## Scripts
 
