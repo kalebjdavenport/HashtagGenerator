@@ -4,7 +4,7 @@ import type { GenerationResult } from "../types.ts";
 const METHOD_LABELS: Record<string, string> = {
   keybert: "KeyBERT",
   nano: "Chrome AI",
-  openai: "OpenAI",
+  webllm: "WebLLM",
 };
 
 export function setStatus(statusDiv: HTMLElement, html: string): void {

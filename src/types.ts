@@ -1,4 +1,4 @@
-export type MethodId = "keybert" | "nano" | "openai";
+export type MethodId = "keybert" | "nano" | "webllm";
 
 export interface GenerationInput {
   title: string;

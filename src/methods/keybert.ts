@@ -3,6 +3,7 @@ import type {
   GenerationInput,
   GenerationResult,
 } from "../types.ts";
+import { spinnerStatus } from "../utils/status-html.ts";
 
 type WorkerMessage = { type: string; [key: string]: unknown };
 
@@ -51,12 +52,7 @@ export function createKeybertMethod(): GenerationMethod {
             const file = typeof data.file === "string" ? data.file : "";
             const shortFile = file.split("/").pop() ?? file;
             onStatusCb?.(
-              `<div class="flex items-center gap-2 text-sm text-buffer-muted">
-                <svg class="spinner w-4 h-4 shrink-0 text-buffer-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="15" />
-                </svg>
-                <span>Downloading ${shortFile}... ${pct}%</span>
-              </div>
+              `${spinnerStatus(`Downloading ${shortFile}... ${pct}%`)}
               <div class="w-full bg-buffer-light rounded-full h-1.5 mt-2">
                 <div class="progress-fill bg-buffer-blue h-1.5 rounded-full" style="width: ${pct}%"></div>
               </div>
@@ -75,14 +71,7 @@ export function createKeybertMethod(): GenerationMethod {
           break;
 
         case "status":
-          onStatusCb?.(
-            `<div class="flex items-center gap-2 text-sm text-buffer-muted">
-              <svg class="spinner w-4 h-4 shrink-0 text-buffer-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="15" />
-              </svg>
-              <span>${msg.message as string}</span>
-            </div>`,
-          );
+          onStatusCb?.(spinnerStatus(msg.message as string));
           break;
 
         case "results": {

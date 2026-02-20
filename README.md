@@ -1,12 +1,12 @@
 # AI Hashtag Generator
 
-Generate relevant hashtags from any text using three AI methods — compare results side by side and pick the best.
+Generate relevant hashtags from any text using three local AI methods — compare results side by side and pick the best. Everything runs in your browser.
 
-| Method | Runs where | Privacy | Setup |
-|--------|-----------|---------|-------|
-| **KeyBERT** | In-browser (Web Worker) | Text never leaves your device | None |
-| **Chrome AI (Gemini Nano)** | In-browser (Chrome built-in) | Text never leaves your device | Chrome flags required |
-| **OpenAI (GPT-4o-mini)** | Server-side (Vercel Edge Function) | Text sent to OpenAI API | `OPENAI_API_KEY` in `.env.local` |
+| Method | Model | Size | Privacy |
+|--------|-------|------|---------|
+| **KeyBERT** | all-MiniLM-L6-v2 (Transformers.js) | ~23 MB | Local — text never leaves your device |
+| **Chrome AI** | Gemini Nano (built into Chrome) | Ships with Chrome | Local — text never leaves your device |
+| **WebLLM** | TinyLlama-1.1B (WebGPU) | ~697 MB | Local — text never leaves your device |
 
 ## How It Works
 
@@ -34,9 +34,9 @@ Uses Chrome's built-in `LanguageModel` Prompt API to generate hashtags locally. 
 2. Navigate to `chrome://flags/#prompt-api-for-gemini-nano` → **Enabled**
 3. Relaunch Chrome
 
-### OpenAI (GPT-4o-mini)
+### WebLLM (TinyLlama-1.1B)
 
-Calls GPT-4o-mini via a Vercel Edge Function proxy at `/api/generate`. The API key is stored server-side — never exposed to the client.
+Uses [WebLLM](https://github.com/mlc-ai/web-llm) to run TinyLlama-1.1B-Chat locally in the browser via WebGPU. The model (~697 MB) downloads on first use and is cached. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+).
 
 ## Getting Started
 
@@ -45,15 +45,7 @@ npm install
 npm run dev
 ```
 
-This starts the Vite dev server. KeyBERT and Chrome AI work immediately. For OpenAI, you need the Vercel dev server:
-
-```bash
-# Create .env.local with your OpenAI key
-echo "OPENAI_API_KEY=sk-..." > .env.local
-
-# Run with Vercel dev (serves both Vite and the edge function)
-npm run dev:vercel
-```
+Open the dev server URL in your browser. All three methods work locally — no API keys or server configuration needed.
 
 ## Building for Production
 
@@ -62,14 +54,9 @@ npm run build
 npm run preview
 ```
 
-The `api/` directory is deployed as a Vercel Edge Function automatically when using Vercel hosting.
-
 ## Project Structure
 
 ```
-├── api/
-│   ├── generate.ts           # Vercel Edge Function (OpenAI proxy)
-│   └── tsconfig.json         # Separate TS config for edge runtime
 ├── index.html                # Semantic HTML with SEO/structured data
 ├── vite.config.ts            # Vite config (Tailwind, ES module workers)
 ├── src/
@@ -80,10 +67,13 @@ The `api/` directory is deployed as a Vercel Edge Function automatically when us
 │   │   ├── tabs.ts           # Accessible tab component (ARIA, keyboard nav)
 │   │   ├── form.ts           # Form HTML template + element helpers
 │   │   └── results.ts        # Hashtag rendering, copy, timing display
+│   ├── utils/
+│   │   ├── parse-hashtags.ts # Shared hashtag parser (regex + fallback)
+│   │   └── status-html.ts    # Shared spinner/status HTML helper
 │   ├── methods/
 │   │   ├── keybert.ts        # Worker lifecycle wrapped in GenerationMethod
 │   │   ├── nano.ts           # Chrome AI detection + session + fallback banner
-│   │   └── openai.ts         # fetch to /api/generate
+│   │   └── webllm.ts         # WebLLM engine lifecycle + WebGPU detection
 │   ├── worker.ts             # Web Worker: model loading, embedding pipeline
 │   ├── keybert.ts            # Pure functions: candidate extraction, cosine similarity, MMR
 │   ├── stopwords.ts          # English stop word list
@@ -108,25 +98,27 @@ interface GenerationMethod {
 }
 ```
 
+Shared utilities live in `src/utils/`:
+- **`parse-hashtags.ts`** — Robust hashtag parser used by both LLM methods (Chrome AI, WebLLM). Tries `#word` regex first, falls back to comma/newline splitting.
+- **`status-html.ts`** — Spinner + message HTML template used by all three methods for status updates.
+
 Session state (title, text, selected tab, per-method results) is persisted to localStorage via `src/storage.ts` with a versioned schema and debounced writes.
 
 ## Privacy
 
-- **KeyBERT** and **Chrome AI**: All processing happens in your browser. No text is sent to any server.
-- **OpenAI**: Text is sent to OpenAI's API via the Vercel Edge Function proxy. The API key is stored server-side.
+All three methods run entirely in your browser. No text is ever sent to any server. The only network requests are one-time model downloads (KeyBERT from Hugging Face CDN, WebLLM from MLC CDN), which are cached by the browser for future visits.
 
 ## Browser Support
 
 - **KeyBERT**: Chrome/Edge 90+, Firefox 90+, Safari 15+
 - **Chrome AI**: Chrome 127+ with experimental flags enabled
-- **OpenAI**: Any modern browser (requires internet)
+- **WebLLM**: Chrome/Edge 113+ (requires WebGPU)
 
 ## Scripts
 
 | Script | Description |
 |--------|-------------|
 | `npm run dev` | Start Vite dev server |
-| `npm run dev:vercel` | Start Vercel dev server (includes edge functions) |
 | `npm run build` | TypeScript check + production build |
 | `npm run preview` | Preview production build |
 | `npm run lighthouse` | Run Lighthouse audit with HTML report |

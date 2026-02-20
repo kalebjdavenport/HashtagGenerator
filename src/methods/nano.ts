@@ -3,6 +3,8 @@ import type {
   GenerationInput,
   GenerationResult,
 } from "../types.ts";
+import { parseHashtags } from "../utils/parse-hashtags.ts";
+import { spinnerStatus } from "../utils/status-html.ts";
 
 // Chrome Built-in AI types (no official TS types yet)
 // New API: global `LanguageModel`  |  Legacy: `window.ai.languageModel`
@@ -37,35 +39,19 @@ function getAPI(): LanguageModelAPI | null {
   return null;
 }
 
-const SYSTEM_PROMPT =
-  "Generate 5 hashtags for the given text. Rules: output ONLY hashtags, each starting with #, separated by spaces. No numbering, no explanations. Maximum 8 hashtags. Example output: #ai #machinelearning #tech #coding #webdev";
+const SYSTEM_PROMPT = `## Task
+Extract 5 hashtags from the text.
+## Format
+#word #word #word #word #word
+## Examples
+Input: A guide to training neural networks with PyTorch
+Output: #pytorch #neuralnetworks #deeplearning #machinelearning #ai
+##
+Input: Easy pasta recipes for busy weeknights
+Output: #pasta #recipes #weeknightdinner #cooking #easymeals
+##`;
 
 const MAX_HASHTAGS = 8;
-
-function parseHashtags(raw: string): string[] {
-  // Try extracting #hashtag patterns first
-  const hashMatches = raw.match(/#[a-zA-Z][a-zA-Z0-9_]*/g);
-  const candidates = hashMatches
-    ? hashMatches.map((t) => t.toLowerCase())
-    : // Fallback: split on commas, newlines, or spaces and format as hashtags
-      raw
-        .split(/[,\n]+/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0 && s.length < 40)
-        .map((s) => "#" + s.toLowerCase().replace(/[^a-z0-9]/g, ""))
-        .filter((s) => s.length > 1);
-
-  // Deduplicate
-  const seen = new Set<string>();
-  const result: string[] = [];
-  for (const tag of candidates) {
-    if (!seen.has(tag)) {
-      seen.add(tag);
-      result.push(tag);
-    }
-  }
-  return result;
-}
 
 export function createNanoMethod(): GenerationMethod {
   let available: boolean | null = null; // null = not yet checked
@@ -132,25 +118,17 @@ export function createNanoMethod(): GenerationMethod {
         throw new Error("Chrome AI Nano is not available in this browser.");
       }
 
-      onStatusCb?.(
-        `<div class="flex items-center gap-2 text-sm text-buffer-muted">
-          <svg class="spinner w-4 h-4 shrink-0 text-buffer-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="15" />
-          </svg>
-          <span>Generating with Chrome AI...</span>
-        </div>`,
-      );
+      onStatusCb?.(spinnerStatus("Generating with Chrome AI..."));
 
       const start = Date.now();
       const s = await getSession();
 
-      const prompt = input.title
-        ? `Title: ${input.title}\n\nText: ${input.text}`
-        : input.text;
+      const titleLine = input.title ? `Title: ${input.title}\n` : "";
+      const prompt = `## Input\n${titleLine}${input.text}\n## Output`;
 
       const raw = await s.prompt(prompt);
       console.log("[Chrome AI] Raw response:", raw);
-      const hashtags = parseHashtags(raw).slice(0, MAX_HASHTAGS);
+      const hashtags = parseHashtags(raw, MAX_HASHTAGS);
       const durationMs = Date.now() - start;
 
       return { hashtags, durationMs, method: "nano" };

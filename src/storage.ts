@@ -1,7 +1,7 @@
 import type { MethodId, GenerationResult } from "./types.ts";
 
 const STORAGE_KEY = "hashtag-generator-state";
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 export interface StoredState {
   version: number;

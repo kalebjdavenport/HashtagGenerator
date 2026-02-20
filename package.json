@@ -7,7 +7,6 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "dev:vercel": "vercel dev",
     "lighthouse": "npm run build && npx --yes concurrently --kill-others --success first \"vite preview --port 4174\" \"npx --yes wait-on http://localhost:4174 && lighthouse http://localhost:4174 --output html --output-path ./lighthouse-report.html --chrome-flags='--headless=new' --view\"",
     "lighthouse:json": "npm run build && npx --yes concurrently --kill-others --success first \"vite preview --port 4174\" \"npx --yes wait-on http://localhost:4174 && lighthouse http://localhost:4174 --output json --output-path ./lighthouse-report.json --chrome-flags='--headless=new'\""
   },
@@ -23,6 +22,7 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
+    "@mlc-ai/web-llm": "^0.2.81",
     "web-vitals": "^5.1.0"
   }
 }

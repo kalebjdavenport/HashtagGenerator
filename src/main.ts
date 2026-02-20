@@ -13,7 +13,7 @@ import {
 import { createTabs } from "./ui/tabs.ts";
 import { createKeybertMethod } from "./methods/keybert.ts";
 import { createNanoMethod } from "./methods/nano.ts";
-import { createOpenaiMethod } from "./methods/openai.ts";
+import { createWebllmMethod } from "./methods/webllm.ts";
 
 if (import.meta.env.DEV) {
   import("./vitals.ts").then((m) => m.initVitals());
@@ -31,7 +31,7 @@ const el = getFormElements();
 const methods: GenerationMethod[] = [
   createKeybertMethod(),
   createNanoMethod(),
-  createOpenaiMethod(),
+  createWebllmMethod(),
 ];
 
 let activeMethod: GenerationMethod = methods[0];
@@ -98,7 +98,6 @@ function updateGenerateButton(): void {
   const textOk = el.textInput.value.trim().length >= 20;
   const methodOk = activeMethod.isAvailable();
 
-  // KeyBERT needs model loaded; Nano needs availability; OpenAI always available
   if (activeMethod.id === "keybert" && !methodOk) {
     el.generateBtn.disabled = true;
     el.generateBtn.setAttribute("aria-disabled", "true");
@@ -107,6 +106,10 @@ function updateGenerateButton(): void {
     el.generateBtn.disabled = true;
     el.generateBtn.setAttribute("aria-disabled", "true");
     el.generateBtn.textContent = "Chrome AI unavailable";
+  } else if (activeMethod.id === "webllm" && !methodOk) {
+    el.generateBtn.disabled = !textOk;
+    el.generateBtn.setAttribute("aria-disabled", String(!textOk));
+    el.generateBtn.textContent = "Generate Hashtags";
   } else if (!textOk) {
     el.generateBtn.disabled = true;
     el.generateBtn.setAttribute("aria-disabled", "true");
@@ -145,8 +148,7 @@ el.form.addEventListener("submit", async (e: Event) => {
   const title = el.titleInput.value.trim();
   if (text.length < 20 || isGenerating) return;
 
-  // For methods that aren't available (except OpenAI which always is)
-  if (!activeMethod.isAvailable() && activeMethod.id !== "openai") return;
+  if (!activeMethod.isAvailable() && activeMethod.id !== "webllm") return;
 
   isGenerating = true;
   updateGenerateButton();
